@@ -1,7 +1,8 @@
 import librosa
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-        
+
+
 def extract_features(filename, **kwargs):
     """
     Extract feature from audio file `file_name`
@@ -24,21 +25,27 @@ def extract_features(filename, **kwargs):
         stft = np.abs(librosa.stft(X))
     result = np.array([])
     if mfcc:
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
+        mfccs = np.mean(librosa.feature.mfcc(
+            y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
         result = np.hstack((result, mfccs))
     if chroma:
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T,axis=0)
+        chroma = np.mean(librosa.feature.chroma_stft(
+            S=stft, sr=sample_rate).T, axis=0)
         result = np.hstack((result, chroma))
     if mel:
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
+        mel = np.mean(librosa.feature.melspectrogram(
+            X, sr=sample_rate).T, axis=0)
         result = np.hstack((result, mel))
     if contrast:
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T,axis=0)
+        contrast = np.mean(librosa.feature.spectral_contrast(
+            S=stft, sr=sample_rate).T, axis=0)
         result = np.hstack((result, contrast))
     if tonnetz:
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T,axis=0)
+        tonnetz = np.mean(librosa.feature.tonnetz(
+            y=librosa.effects.harmonic(X), sr=sample_rate).T, axis=0)
         result = np.hstack((result, tonnetz))
     return result
+
 
 def spectrogram(samples, fft_length=256, sample_rate=2, hop_length=128):
     """
@@ -92,6 +99,7 @@ def spectrogram(samples, fft_length=256, sample_rate=2, hop_length=128):
 
     return x, freqs
 
+
 def spectrogram_from_file(filename, step=10, window=20, max_freq=None,
                           eps=1e-14):
     """ Calculate the log of linear spectrogram from FFT energy
@@ -110,7 +118,7 @@ def spectrogram_from_file(filename, step=10, window=20, max_freq=None,
         max_freq = sample_rate / 2
     if max_freq > sample_rate / 2:
         raise ValueError("max_freq must not be greater than half of "
-                            " sample rate")
+                         " sample rate")
     if step > window:
         raise ValueError("step size must not be greater than window size")
     hop_length = int(0.001 * step * sample_rate)
