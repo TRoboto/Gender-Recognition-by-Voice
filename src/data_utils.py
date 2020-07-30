@@ -1,6 +1,5 @@
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import os
 import librosa
@@ -57,7 +56,7 @@ def load_data(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=
     for i, (filename, gender) in tqdm.tqdm(enumerate(zip(df['filename'], df['gender'])), "Loading data", total=n_samples):
         filename = '../dataset/' + filename
         X[i] = extract_features(
-            filename, mel=True, mfcc=True, chroma=True, contrast=True) # mfcc=True, chroma=True, contrast=True,  tonnetz=True
+            filename, mel=True, mfcc=True, chroma=True, contrast=True)  # mfcc=True, chroma=True, contrast=True,  tonnetz=True
         y[i] = label2int[gender]
     # save the audio features and labels into files
     # so we won't load each one of them next run
