@@ -27,7 +27,7 @@ def plot_raw_audio(audio_file):
     plt.show()
 
 
-def load_data(data_path='dataset/cv-valid-train.csv', vector_length=193):
+def load_data(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=187):
     """A function to load gender recognition dataset from `dataset` folder
     After the second run, this will load from results/features.npy and results/labels.npy files
     as it is much faster!"""
@@ -41,8 +41,6 @@ def load_data(data_path='dataset/cv-valid-train.csv', vector_length=193):
         return X, y
     # read dataframe
     df = pd.read_csv(data_path)
-    # take only male & female genders (i.e droping NaNs & 'other' gender)
-    df = df[(df['gender'] == 'male') | df['gender'] == 'female']
     # get total samples
     n_samples = len(df)
     # get total male samples
@@ -57,8 +55,9 @@ def load_data(data_path='dataset/cv-valid-train.csv', vector_length=193):
     # initialize an empty array for all audio labels (1 for male and 0 for female)
     y = np.zeros((n_samples, 1))
     for i, (filename, gender) in tqdm.tqdm(enumerate(zip(df['filename'], df['gender'])), "Loading data", total=n_samples):
+        filename = '../dataset/' + filename
         X[i] = extract_features(
-            filename, mel=True, mfcc=True, chroma=True, contrast=True,  tonnetz=True)
+            filename, mel=True, mfcc=True, chroma=True, contrast=True) # mfcc=True, chroma=True, contrast=True,  tonnetz=True
         y[i] = label2int[gender]
     # save the audio features and labels into files
     # so we won't load each one of them next run
