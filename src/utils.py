@@ -47,6 +47,37 @@ def extract_features(filename, **kwargs):
     return result
 
 
+def extract_2d_feature(file_name, feat):
+    """
+    Extract feature from audio file `file_name`
+        Features supported:
+            - MFCC (mfcc)
+            - Chroma (chroma)
+            - MEL Spectrogram Frequency (mel)
+            - Contrast (contrast)
+            - Tonnetz (tonnetz)
+        e.g:
+        `features = extract_feature(path, 'mel')`
+    """
+    X, sample_rate = librosa.core.load(file_name)
+
+    if feat in ['chroma', 'contrast']:
+        stft = np.abs(librosa.stft(X))
+    result = np.array([])
+    if 'mfcc' in feat:
+        result = librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T
+    elif 'chroma' in feat:
+        result = librosa.feature.chroma_stft(S=stft, sr=sample_rate).T
+    elif 'mel' in feat:
+        result = librosa.feature.melspectrogram(X, sr=sample_rate).T
+    elif 'contrast' in feat:
+        result = librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T
+    elif 'tonnetz' in feat:
+        result = librosa.feature.tonnetz(
+            y=librosa.effects.harmonic(X), sr=sample_rate).T
+    return result
+
+
 def spectrogram(samples, fft_length=256, sample_rate=2, hop_length=128):
     """
     Compute the spectrogram for a real signal.
