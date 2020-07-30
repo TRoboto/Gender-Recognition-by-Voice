@@ -6,17 +6,18 @@ import os
 import librosa
 import pandas as pd
 import tqdm
-from utils import extract_1d_feature
+from utils import extract_features
 
 label2int = {
     "male": 1,
     "female": 0
 }
 
+
 def plot_raw_audio(audio_file):
     # plot the raw audio signal
     raw_audio, _ = librosa.load(audio_file)
-    fig = plt.figure(figsize=(12,3))
+    fig = plt.figure(figsize=(12, 3))
     ax = fig.add_subplot(111)
     steps = len(raw_audio)
     ax.plot(np.linspace(1, steps, steps), raw_audio)
@@ -26,7 +27,7 @@ def plot_raw_audio(audio_file):
     plt.show()
 
 
-def load_data(data_path = 'dataset/cv-valid-train.csv', vector_length=128):
+def load_data(data_path='dataset/cv-valid-train.csv', vector_length=193):
     """A function to load gender recognition dataset from `dataset` folder
     After the second run, this will load from results/features.npy and results/labels.npy files
     as it is much faster!"""
@@ -56,8 +57,8 @@ def load_data(data_path = 'dataset/cv-valid-train.csv', vector_length=128):
     # initialize an empty array for all audio labels (1 for male and 0 for female)
     y = np.zeros((n_samples, 1))
     for i, (filename, gender) in tqdm.tqdm(enumerate(zip(df['filename'], df['gender'])), "Loading data", total=n_samples):
-        features = np.load(filename)
-        X[i] = features
+        X[i] = extract_features(
+            filename, mel=True, mfcc=True, chroma=True, contrast=True,  tonnetz=True)
         y[i] = label2int[gender]
     # save the audio features and labels into files
     # so we won't load each one of them next run
