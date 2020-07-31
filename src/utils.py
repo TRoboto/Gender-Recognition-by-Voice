@@ -47,7 +47,7 @@ def extract_features(filename, **kwargs):
     return result
 
 
-def extract_2d_feature(file_name, feat):
+def extract_2d_features(filename, **kwargs):
     """
     Extract feature from audio file `file_name`
         Features supported:
@@ -57,22 +57,31 @@ def extract_2d_feature(file_name, feat):
             - Contrast (contrast)
             - Tonnetz (tonnetz)
         e.g:
-        `features = extract_feature(path, 'mel')`
+        `features = extract_feature(path, mel = True)`
     """
-    X, sample_rate = librosa.core.load(file_name)
+    X, sample_rate = librosa.core.load(filename)
 
-    if feat in ['chroma', 'contrast']:
+    mfcc = kwargs.get("mfcc")
+    chroma = kwargs.get("chroma")
+    mel = kwargs.get("mel")
+    contrast = kwargs.get("contrast")
+    tonnetz = kwargs.get("tonnetz")
+    X, sample_rate = librosa.core.load(filename)
+    if chroma or contrast:
         stft = np.abs(librosa.stft(X))
-    result = np.array([])
-    if 'mfcc' in feat:
-        result = librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T
-    elif 'chroma' in feat:
-        result = librosa.feature.chroma_stft(S=stft, sr=sample_rate).T
-    elif 'mel' in feat:
-        result = librosa.feature.melspectrogram(X, sr=sample_rate).T
-    elif 'contrast' in feat:
-        result = librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T
-    elif 'tonnetz' in feat:
+    if mfcc:
+        result = librosa.feature.mfcc(
+            y=X, sr=sample_rate, n_mfcc=40).T
+    elif chroma:
+        result = librosa.feature.chroma_stft(
+            S=stft, sr=sample_rate).T
+    elif mel:
+        result = librosa.feature.melspectrogram(
+            X, sr=sample_rate).T
+    elif contrast:
+        result = librosa.feature.spectral_contrast(
+            S=stft, sr=sample_rate).T
+    elif tonnetz:
         result = librosa.feature.tonnetz(
             y=librosa.effects.harmonic(X), sr=sample_rate).T
     return result
