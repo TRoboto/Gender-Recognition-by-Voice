@@ -27,7 +27,7 @@ def plot_raw_audio(audio_file):
     plt.show()
 
 
-def load_data_1d(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=187):
+def load_data(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=187):
     """A function to load gender recognition dataset from `dataset` folder
     After the second run, this will load from results/features.npy and results/labels.npy files
     as it is much faster!"""
@@ -101,3 +101,12 @@ def load_data_2d(data_path='../dataset/cv-valid-train_filtered.csv'):
     np.save("results/features2d", X)
     np.save("results/labels2d", y)
     return X, y
+
+def balance_dataset(X, y):
+    # get min length
+    n = min([(y == l).sum() for l in np.unique(y)])
+    # select randomly
+    mask = np.hstack([np.random.choice(np.where(y == l)[0], n, replace=False)
+                      for l in np.unique(y)])
+    # resample the arrays
+    return X[mask]. y[mask]
