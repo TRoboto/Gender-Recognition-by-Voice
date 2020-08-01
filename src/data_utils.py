@@ -4,18 +4,24 @@ import numpy as np
 import os
 import librosa
 import pandas as pd
+import torch
 import tqdm
 import config
 import pickle
 from torch.utils.data import TensorDataset, DataLoader
 from utils import extract_features, extract_2d_features
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
+# set seed for reproducibility
+np.random.seed(0)
 
 label2int = {
     "male": 1,
     "female": 0
 }
+
+scaler = StandardScaler()
 
 
 def plot_raw_audio(audio_file):
@@ -115,10 +121,10 @@ def balance_dataset(X, y):
     mask = np.hstack([np.random.choice(np.where(y == l)[0], n, replace=False)
                       for l in np.unique(y)])
     # resample the arrays
-    return X[mask]. y[mask]
+    return X[mask], y[mask]
 
 
-def split_dataset(X, y, test_size=0.3):
+def split_dataset(X, y, test_size=0.1):
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=0)
     print('Training set samples shape:', X_train.shape)
@@ -126,10 +132,10 @@ def split_dataset(X, y, test_size=0.3):
     return X_train, X_val, y_train, y_val
 
 
-def get_dataloader(X, y, dtype = 'train'):
+def get_dataloader(X, y, dtype='train'):
     # create your datset
     dataset = TensorDataset(torch.Tensor(
-        X), torch.Tensor(Y))  
+        X), torch.Tensor(y))
     # create your dataloader
     if dtype == 'train':
         dataloader = DataLoader(
@@ -138,3 +144,11 @@ def get_dataloader(X, y, dtype = 'train'):
         dataloader = DataLoader(
             dataset, batch_size=config.VALID_BATCH_SIZE)
     return dataloader
+
+
+def normalize(X, train=True):
+    if train:
+        Xn = scaler.fit_transform(X)
+        pickle.dump(scaler, open('results/scaler.pkl','wb'))
+        return Xn
+    return scaler.transform(X)
