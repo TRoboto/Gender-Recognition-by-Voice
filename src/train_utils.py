@@ -36,7 +36,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, model_name,
 
             batch_size = config.TRAIN_BATCH_SIZE if phase == 'train' else config.VALID_BATCH_SIZE
             datalength = len(dataloaders[phase].dataset)
-            total_length =  datalength // batch_size
+            total_length = datalength // batch_size
 
             counter = 0
             # Iterate over data.
@@ -61,7 +61,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, model_name,
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(labels.view_as(outputs) == torch.round(outputs))
+                running_corrects += torch.sum(labels.view_as(outputs)
+                                              == torch.round(outputs))
             if phase == 'train':
                 scheduler.step()
 
@@ -84,10 +85,12 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, model_name,
     print('Best val Acc: {:4f}'.format(best_acc))
 
     # save best model weights
-    torch.save(best_model_wts, 'results/' +  model_name + '_acc_{:.4f}'.format(best_acc.cpu().detach().numpy()) + ".pt")
+    torch.save(best_model_wts, 'results/' + model_name +
+               '_acc_{:.4f}'.format(best_acc.cpu().detach().numpy()) + ".pt")
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
+
 
 def eval_fn(model, test_loader):
     ''' Evaluate model on the test set 
