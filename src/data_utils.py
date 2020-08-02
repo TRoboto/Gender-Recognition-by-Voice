@@ -157,9 +157,9 @@ def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
         X = []
         y = []
         for i in range(len(dataset)):
-            X.append(dataset[i].mfcc)
+            X.append(np.array(dataset[i].mfcc))
             y.append(label2int[dataset[i].gender])
-        return X, y
+        return np.array(X), np.array(y)
     # read dataframe
     df = pd.read_csv(data_path)
     # get total samples
@@ -175,10 +175,10 @@ def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
     for i in tqdm.tqdm(df.index, "Loading data", total=len(df)):
         audio = VoiceInstance(os.path.join('../dataset/', df.loc[i, 'filename']), df.loc[i, 'gender'])
         instances.append(audio)
-    pickle.dump(self.instances, open("results/features_2d.pkl","wb"))
+    pickle.dump(instances, open("results/features_2d.pkl","wb"))
     X = []
     y = []
     for i in range(len(instances)):
         X.append(instances[i].mfcc)
         y.append(label2int[instances[i].gender])
-    return X, y
+    return np.array(X), np.array(y)
