@@ -96,16 +96,14 @@ def eval_fn(model, test_loader):
     ''' Evaluate model on the test set 
     '''
     model.eval()
-    counter = 0
     running_corrects = 0
     with torch.no_grad():
-        for bi, (inputs, labels) in tqdm(enumerate(test_loader), total=len(test_loader)):
-            counter += len(labels)
+        for inputs, labels in tqdm(test_loader, total=len(test_loader)):
             inputs = inputs.to(device)
             labels = labels.to(device)
 
             outputs = model(inputs)
-            _, preds = torch.max(outputs, 1)
-            running_corrects += torch.sum(preds == labels.data)
+            running_corrects += torch.sum(labels.view_as(outputs)
+                                            == torch.round(outputs))
 
-    print('Test set ACC:', running_corrects / counter)
+    print('Test set ACC:', running_corrects / len(test_loader.dataset))
