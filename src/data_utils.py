@@ -12,6 +12,7 @@ from utils import extract_features
 from torchaudio.transforms import MFCC, Resample, MelSpectrogram
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from keras_preprocessing.sequence import pad_sequences
 
 # set seed for reproducibility
 np.random.seed(0)
@@ -115,13 +116,14 @@ def normalize(X, train=True):
         return Xn
     return scaler.transform(X)
 
+
 class VoiceInstance:
     def __init__(self, file, gender):
-        
+
         self.file = file
         self.gender = gender
         self._transform_audio()
-        
+
     def _transform_audio(self):
         waveform, rate = librosa.load(self.file)
         new_rate = rate/100
@@ -129,19 +131,21 @@ class VoiceInstance:
         self.stft = self._get_stft(resampled, new_rate)
         self.mfcc = self._get_mfcc(resampled, new_rate)
         self.spectrogram = self._get_spectrogram(resampled, new_rate)
-        
+
     def _get_spectrogram(self, arr, sample_rate=22000):
-        
-        spectrogram_tensor = MelSpectrogram(sample_rate, n_mels=config.WINDOW_SIZE)
+
+        spectrogram_tensor = MelSpectrogram(
+            sample_rate, n_mels=config.WINDOW_SIZE)
         return spectrogram_tensor.forward(arr)
-    
+
     def _get_mfcc(self, arr, sample_rate=22000):
-        
+
         mfcc_tensor = MFCC(sample_rate, n_mfcc=config.WINDOW_SIZE)
         return mfcc_tensor.forward(arr)
 
     def _get_stft(self, waveform, rate):
         return torch.stft(waveform, int(rate))
+
 
 def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
     """A function to load gender recognition dataset from `dataset` folder
@@ -154,12 +158,11 @@ def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
     if os.path.isfile("results/features_2d.pkl"):
         # load dataset
         dataset = pickle.load(open('results/features_2d.pkl', 'rb'))
-        X = []
-        y = []
-        for i in range(len(dataset)):
-            X.append(np.array(dataset[i].mfcc))
-            y.append(label2int[dataset[i].gender])
-        return np.array(X), np.array(y)
+        # use mfcc features
+        mfcc = [x.mfcc.reshape(-1, 128) for x in dataset]
+        X = pad_sequences(mfcc, maxlen=config.MAX_LENGTH, padding='pre', value=0)
+        y = np.array([label2int[x.gender] for x in dataset])
+        return X, y
     # read dataframe
     df = pd.read_csv(data_path)
     # get total samples
@@ -171,14 +174,15 @@ def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
     print("Total samples:", n_samples)
     print("Total male samples:", n_male_samples)
     print("Total female samples:", n_female_samples)
-    instances = []
+    dataset = []
     for i in tqdm.tqdm(df.index, "Loading data", total=len(df)):
-        audio = VoiceInstance(os.path.join('../dataset/', df.loc[i, 'filename']), df.loc[i, 'gender'])
-        instances.append(audio)
-    pickle.dump(instances, open("results/features_2d.pkl","wb"))
-    X = []
-    y = []
-    for i in range(len(instances)):
-        X.append(instances[i].mfcc)
-        y.append(label2int[instances[i].gender])
-    return np.array(X), np.array(y)
+        audio = VoiceInstance(os.path.join(
+            '../dataset/', df.loc[i, 'filename']), df.loc[i, 'gender'])
+        dataset.append(audio)
+    pickle.dump(dataset, open("results/features_2d.pkl", "wb"))
+    X = np.empty(len(dataset), object)
+    y = np.zeros((n_samples, 1))
+    for i in range(len(dataset)):
+        X[i] = np.array(dataset[i].mfcc)
+        y[i] = label2int[dataset[i].gender]
+    return X, y
