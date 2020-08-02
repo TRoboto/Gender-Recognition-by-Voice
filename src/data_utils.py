@@ -143,35 +143,42 @@ class VoiceInstance:
     def _get_stft(self, waveform, rate):
         return torch.stft(waveform, int(rate))
 
-class VoiceDataset(Dataset):
-    
-    def __init__(self, dataframe, audio_dir = '../dataset/'):
-        
-        self.dataframe = dataframe
-        self.audio_dir = audio_dir
-        self.load_data()
-    
-    def __len__(self):
-        #gen = (x for x in self.instances)
-        return len(self.instances)
-    
-    def __getitem__(self, idx):
-        return self.instances[idx].mfcc, self.instances[idx].gender
-    
-    def load_data(self):
-        # make sure results folder exists
-        if not os.path.isdir("results"):
-            os.mkdir("results")
-        # if features & labels already loaded individually and bundled, load them from there instead
-        if os.path.isfile("results/features_2d.pkl"):
-            # open a file, where you stored the pickled data
-            file = open('results/features_2d.pkl', 'rb')
-            # dump information to that file
-            self.instances = pickle.load(file)
-            return
-
-        self.instances = []
-        for i in tqdm.tqdm(self.dataframe.index, "Loading data", total=len(self.dataframe)):
-            audio = VoiceInstance(os.path.join(self.audio_dir, self.dataframe.loc[i, 'filename']), self.dataframe.loc[i, 'gender'])
-            self.instances.append(audio)
-        pickle.dump(self.instances, open("results/features_2d.pkl","wb"))
+def load_2d_data(data_path=config.DATA_PATH, vector_length=187):
+    """A function to load gender recognition dataset from `dataset` folder
+    After the second run, this will load from results/features_2d.pkl file
+    as it is much faster!"""
+    # make sure results folder exists
+    if not os.path.isdir("results"):
+        os.mkdir("results")
+    # if features & labels already loaded individually and bundled, load them from there instead
+    if os.path.isfile("results/features_2d.pkl"):
+        # load dataset
+        dataset = pickle.load(open('results/features_2d.pkl', 'rb'))
+        X = []
+        y = []
+        for i in range(len(dataset)):
+            X.append(dataset[i].mfcc)
+            y.append(label2int[dataset[i].gender])
+        return X, y
+    # read dataframe
+    df = pd.read_csv(data_path)
+    # get total samples
+    n_samples = len(df)
+    # get total male samples
+    n_male_samples = len(df[df['gender'] == 'male'])
+    # get total female samples
+    n_female_samples = len(df[df['gender'] == 'female'])
+    print("Total samples:", n_samples)
+    print("Total male samples:", n_male_samples)
+    print("Total female samples:", n_female_samples)
+    instances = []
+    for i in tqdm.tqdm(df.index, "Loading data", total=len(df)):
+        audio = VoiceInstance(os.path.join('../dataset/', df.loc[i, 'filename']), df.loc[i, 'gender'])
+        instances.append(audio)
+    pickle.dump(self.instances, open("results/features_2d.pkl","wb"))
+    X = []
+    y = []
+    for i in range(len(instances)):
+        X.append(instances[i].mfcc)
+        y.append(label2int[instances[i].gender])
+    return X, y
