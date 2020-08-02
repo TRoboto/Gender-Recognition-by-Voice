@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -8,8 +7,9 @@ import torch
 import tqdm
 import config
 import pickle
-from torch.utils.data import TensorDataset, DataLoader
-from utils import extract_features, extract_2d_features
+from torch.utils.data import TensorDataset, DataLoader, Dataset
+from utils import extract_features
+from torchaudio.transforms import MFCC, Resample, MelSpectrogram
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
@@ -37,7 +37,7 @@ def plot_raw_audio(audio_file):
     plt.show()
 
 
-def load_data(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=187):
+def load_data(data_path=config.DATA_PATH, vector_length=187):
     """A function to load gender recognition dataset from `dataset` folder
     After the second run, this will load from results/features.npy and results/labels.npy files
     as it is much faster!"""
@@ -76,44 +76,6 @@ def load_data(data_path='../dataset/cv-valid-train_filtered.csv', vector_length=
     return X, y
 
 
-def load_data_2d(data_path='../dataset/cv-valid-train_filtered.csv'):
-    """A function to load gender recognition dataset from `dataset` folder
-    After the second run, this will load from results/features2d.pkl and results/labels.pkl files
-    as it is much faster!"""
-    # make sure results folder exists
-    if not os.path.isdir("results"):
-        os.mkdir("results")
-    # if features & labels already loaded individually and bundled, load them from there instead
-    if os.path.isfile("results/features2d.pkl") and os.path.isfile("results/labels2d.pkl"):
-        X = pickle.load("results/features2d.pkl", allow_pickle=True)
-        y = pickle.load("results/labels2d.pkl")
-        return X, y
-    # read dataframe
-    df = pd.read_csv(data_path)
-    # get total samples
-    n_samples = len(df)
-    # get total male samples
-    n_male_samples = len(df[df['gender'] == 'male'])
-    # get total female samples
-    n_female_samples = len(df[df['gender'] == 'female'])
-    print("Total samples:", n_samples)
-    print("Total male samples:", n_male_samples)
-    print("Total female samples:", n_female_samples)
-    # initialize an empty array for all audio features
-    X = [np.array([]) for _ in range(n_samples)]
-    # initialize an empty array for all audio labels (1 for male and 0 for female)
-    y = np.zeros((n_samples, 1))
-    for i, (filename, gender) in tqdm.tqdm(enumerate(zip(df['filename'], df['gender'])), "Loading data", total=n_samples):
-        filename = '../dataset/' + filename
-        X[i] = extract_2d_features(filename, mel=True)
-        y[i] = label2int[gender]
-    # save the audio features and labels into files
-    # so we won't load each one of them next run
-    np.save("results/features2d", X)
-    np.save("results/labels2d", y)
-    return X, y
-
-
 def balance_dataset(X, y):
     # get min length
     n = min([(y == l).sum() for l in np.unique(y)])
@@ -149,6 +111,67 @@ def get_dataloader(X, y, dtype='train'):
 def normalize(X, train=True):
     if train:
         Xn = scaler.fit_transform(X)
-        pickle.dump(scaler, open('results/scaler.pkl','wb'))
+        pickle.dump(scaler, open('results/scaler.pkl', 'wb'))
         return Xn
     return scaler.transform(X)
+
+class VoiceInstance:
+    def __init__(self, file, gender):
+        
+        self.file = file
+        self.gender = gender
+        self._transform_audio()
+        
+    def _transform_audio(self):
+        waveform, rate = librosa.load(self.file)
+        new_rate = rate/100
+        resampled = Resample(rate, new_rate)(torch.Tensor(waveform))
+        self.stft = self._get_stft(resampled, new_rate)
+        self.mfcc = self._get_mfcc(resampled, new_rate)
+        self.spectrogram = self._get_spectrogram(resampled, new_rate)
+        
+    def _get_spectrogram(self, arr, sample_rate=22000):
+        
+        spectrogram_tensor = MelSpectrogram(sample_rate, n_mels=config.WINDOW_SIZE)
+        return spectrogram_tensor.forward(arr)
+    
+    def _get_mfcc(self, arr, sample_rate=22000):
+        
+        mfcc_tensor = MFCC(sample_rate, n_mfcc=config.WINDOW_SIZE)
+        return mfcc_tensor.forward(arr)
+
+    def _get_stft(self, waveform, rate):
+        return torch.stft(waveform, int(rate))
+
+class VoiceDataset(Dataset):
+    
+    def __init__(self, dataframe, audio_dir = '../dataset/'):
+        
+        self.dataframe = dataframe
+        self.audio_dir = audio_dir
+        self.load_data()
+    
+    def __len__(self):
+        #gen = (x for x in self.instances)
+        return len(self.instances)
+    
+    def __getitem__(self, idx):
+        return self.instances[idx].mfcc, self.instances[idx].gender
+    
+    def load_data(self):
+        # make sure results folder exists
+        if not os.path.isdir("results"):
+            os.mkdir("results")
+        # if features & labels already loaded individually and bundled, load them from there instead
+        if os.path.isfile("results/features_2d.pkl"):
+            # open a file, where you stored the pickled data
+            file = open('results/features_2d.pkl', 'rb')
+            # dump information to that file
+            self.instances = pickle.load(file)
+            return
+
+        self.instances = []
+        for i in tqdm.tqdm(self.dataframe.index, "Loading data", total=len(self.dataframe)):
+            audio = VoiceInstance(os.path.join(self.audio_dir, self.dataframe.loc[i, 'filename']), self.dataframe.loc[i, 'gender'])
+            self.instances.append(audio)
+        pickle.dump(self.instances, open("results/features_2d.pkl","wb"))
