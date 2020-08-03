@@ -9,7 +9,7 @@ import torch
 import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
+from torch.utils.data import TensorDataset, DataLoader
 import config
 from utils import extract_features
 
@@ -21,7 +21,6 @@ label2int = {
     "female": 0
 }
 
-scaler = StandardScaler()
 
 
 def filter_dataset(datapath):
@@ -152,9 +151,12 @@ def get_dataloader(X, y, dtype='train'):
     return dataloader
 
 
-def normalize(X, train=True):
-    if train:
-        Xn = scaler.fit_transform(X)
-        pickle.dump(scaler, open('results/scaler.pkl', 'wb'))
-        return Xn
-    return scaler.transform(X)
+def normalize(X):
+    if os.path.isfile('results/scaler.pkl'):
+        scaler = pickle.load(open('results/scaler.pkl', 'rb'))
+        return scaler.transform(X)
+    
+    scaler = StandardScaler()
+    Xn = scaler.fit_transform(X)
+    pickle.dump(scaler, open('results/scaler.pkl'))
+    return Xn
