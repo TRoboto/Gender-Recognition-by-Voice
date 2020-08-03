@@ -67,17 +67,16 @@ def train_lazy():
     # print(scores)
 
     # Final model
-    model_path = 'results/final_model.model'
     # check if model exist
-    if os.path.isfile(model_path):
+    if os.path.isfile(config.MODEL_PATH):
         model = XGBClassifier()
-        model.load_model(model_path)
+        model.load_model(config.MODEL_PATH)
     else:
         model = XGBClassifier()
         model.fit(X_train, y_train, eval_metric="error", eval_set=[
                   (X_train, y_train), (X_val, y_val)], verbose=True)
         # save model
-        model.save_model(model_path)
+        model.save_model(config.MODEL_PATH)
     # performance on train set
     y_pred = model.predict(X_train)
     # evaluate predictions
