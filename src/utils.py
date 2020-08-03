@@ -1,6 +1,18 @@
 import librosa
 import numpy as np
-import torchaudio
+import pandas as pd
+
+def plot_raw_audio(audio_file):
+    # plot the raw audio signal
+    raw_audio, _ = librosa.load(audio_file)
+    fig = plt.figure(figsize=(12, 3))
+    ax = fig.add_subplot(111)
+    steps = len(raw_audio)
+    ax.plot(np.linspace(1, steps, steps), raw_audio)
+    plt.title('Audio Signal')
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+    plt.show()
 
 def extract_features(filename, **kwargs):
     """
