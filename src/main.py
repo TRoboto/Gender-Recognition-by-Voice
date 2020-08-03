@@ -3,7 +3,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from lazypredict.Supervised import LazyClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score
 
 import config
 from data_utils import *
@@ -74,14 +74,15 @@ def train_lazy():
         model.load_model(model_path)
     else:
         model = XGBClassifier()
-        model.fit(X_train, y_train, eval_metric="error", eval_set=[(X_train, y_train), (X_val, y_val)], verbose=True)
+        model.fit(X_train, y_train, eval_metric="error", eval_set=[
+                  (X_train, y_train), (X_val, y_val)], verbose=True)
         # save model
         model.save_model(model_path)
     # performance on train set
     y_pred = model.predict(X_train)
     # evaluate predictions
     print_performance(y_train, y_pred, 'train')
-    
+
     # performance on val set
     y_pred = model.predict(X_val)
     # evaluate predictions
@@ -98,12 +99,14 @@ def train_lazy():
     # print
     plot_performance(model)
 
+
 def print_performance(y_true, y_pred, name):
     predictions = [round(value) for value in y_pred]
     perfs = [accuracy_score, balanced_accuracy_score,
-             log_loss, f1_score, roc_auc_score]
+             f1_score, roc_auc_score]
     for perf in perfs:
-        print(perf.__name__ + f' on {name} set:' + '%.2f%%' % (perf(y_true, predictions) * 100.0))
+        print(perf.__name__ + f' on {name} set:' +
+              '%.2f%%' % (perf(y_true, predictions) * 100.0))
 
 
 if __name__ == "__main__":
