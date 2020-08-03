@@ -9,6 +9,7 @@ import config
 from data_utils import *
 from models import *
 from train_utils import *
+from utils import plot_performance
 
 
 def train_ann():
@@ -73,7 +74,7 @@ def train_lazy():
         model.load_model(model_path)
     else:
         model = XGBClassifier()
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, eval_metric="error", eval_set=[(X_train, y_train), (X_val, y_val)], verbose=True)
         # save model
         model.save_model(model_path)
     # performance on train set
@@ -94,7 +95,8 @@ def train_lazy():
     y_pred = model.predict(X_test)
     # evaluate predictions
     print_performance(y_test, y_pred, 'test')
-
+    # print
+    plot_performance(model)
 
 def print_performance(y_true, y_pred, name):
     predictions = [round(value) for value in y_pred]
@@ -105,4 +107,4 @@ def print_performance(y_true, y_pred, name):
 
 
 if __name__ == "__main__":
-    train_ann()
+    train_lazy()
