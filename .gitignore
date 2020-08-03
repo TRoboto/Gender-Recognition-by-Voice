@@ -1,4 +1,5 @@
 dataset/
+src/.*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -125,3 +126,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 *.npy
+src/results/features_2d.pkl
