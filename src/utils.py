@@ -1,6 +1,8 @@
 import librosa
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot
+
 
 def plot_raw_audio(audio_file):
     # plot the raw audio signal
@@ -13,6 +15,7 @@ def plot_raw_audio(audio_file):
     plt.xlabel('Time')
     plt.ylabel('Amplitude')
     plt.show()
+
 
 def extract_features(filename, **kwargs):
     """
@@ -56,3 +59,19 @@ def extract_features(filename, **kwargs):
             y=librosa.effects.harmonic(X), sr=sample_rate).T, axis=0)
         result = np.hstack((result, tonnetz))
     return result
+
+
+def plot_performance(model):
+    # retrieve performance metrics
+    results = model.evals_result()
+    epochs = len(results['validation_0']['error'])
+    x_axis = range(0, epochs)
+    # plot classification error
+    fig, ax = pyplot.subplots()
+    ax.plot(x_axis, results['validation_0']['error'], label='Train')
+    ax.plot(x_axis, results['validation_1']['error'], label='Validation')
+    ax.legend()
+    pyplot.xlabel('Epoch')
+    pyplot.ylabel('Classification Error')
+    pyplot.title('XGBoost Classification Error')
+    pyplot.show()
