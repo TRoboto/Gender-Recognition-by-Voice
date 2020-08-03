@@ -96,9 +96,10 @@ def eval_fn(model, test_loader):
     ''' Evaluate model on the test set 
     '''
     model.eval()
+    model.to(device)
     running_corrects = 0
     with torch.no_grad():
-        for inputs, labels in tqdm(test_loader, total=len(test_loader)):
+        for inputs, labels in test_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -106,4 +107,5 @@ def eval_fn(model, test_loader):
             running_corrects += torch.sum(labels.view_as(outputs)
                                           == torch.round(outputs))
 
-    print('Test set ACC:', running_corrects / len(test_loader.dataset))
+    print('Test set ACC: %.2f%%' % (running_corrects.cpu(
+    ).detach().numpy() / len(test_loader.dataset) * 100))
