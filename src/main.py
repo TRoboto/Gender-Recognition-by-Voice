@@ -2,11 +2,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from lazypredict.Supervised import LazyClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, f1_score, roc_auc_score
 
 import config
 from data_utils import *
 from models import *
-from train_utils import train_model
+from train_utils import *
 
 
 def train_ann():
@@ -18,21 +20,34 @@ def train_ann():
     X_train, X_val, y_train, y_val = split_dataset(Xb, yb)
     # Normalize
     X_train = normalize(X_train)
-    X_val = normalize(X_val, False)
+    X_val = normalize(X_val)
     # Get dataloaders
     dataloaders = {}
     dataloaders['train'] = get_dataloader(X_train, y_train)
     dataloaders['val'] = get_dataloader(X_val, y_val, 'val')
     # Define models
-    net = ann_model()
-    # Define the loss fn, the optimizer and the scheduler
-    criterion = nn.BCELoss()
-    optimizer = optim.Adam(net.parameters(), lr=1e-3)
-    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+    model = ann_model()
+    if os.path.isfile('results/ann_model.pt'):
+        model.load_state_dict(torch.load('results/ann_model.pt'))
+    else:
+        # Define the loss fn, the optimizer and the scheduler
+        criterion = nn.BCELoss()
+        optimizer = optim.Adam(model.parameters(), lr=1e-3)
+        scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
-    # train the model
-    train_model(net, criterion, optimizer, scheduler,
-                dataloaders, 'ann_model')
+        # train the model
+        train_model(model, criterion, optimizer, scheduler,
+                    dataloaders, 'ann_model')
+
+    # Load the test dataset
+    X_test, y_test = load_test_data()
+    # # Normalize
+    X_test = normalize(X_test)
+    # Get dataloader
+    test_loader = get_dataloader(X_test, y_test)
+    # evaluate
+    eval_fn(model, test_loader)
+
 
 def train_lazy():
     # Load the dataset
@@ -40,14 +55,54 @@ def train_lazy():
     # Split the data
     X_train, X_val, y_train, y_val = split_dataset(X, y)
     # # Normalize
-    # X_train = normalize(X_train)
-    # X_val = normalize(X_val, False)
-    # define classifier
-    clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
-    # fit
-    models,predictions = clf.fit(X_train, X_val, y_train, y_val)
-    # print
-    print(models)
+    X_train = normalize(X_train)
+    X_val = normalize(X_val)
+
+    # uncomment to check the performance of the 25 models
+    # clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+    # # fit
+    # scores,_ = clf.fit(X_train, X_val, y_train, y_val)
+    # # print
+    # print(scores)
+
+    # Final model
+    model_path = 'results/final_model.model'
+    # check if model exist
+    if os.path.isfile(model_path):
+        model = XGBClassifier()
+        model.load_model(model_path)
+    else:
+        model = XGBClassifier()
+        model.fit(X_train, y_train)
+        # save model
+        model.save_model(model_path)
+    # performance on train set
+    y_pred = model.predict(X_train)
+    # evaluate predictions
+    print_performance(y_train, y_pred, 'train')
+    
+    # performance on val set
+    y_pred = model.predict(X_val)
+    # evaluate predictions
+    print_performance(y_val, y_pred, 'val')
+
+    # Load the test dataset
+    X_test, y_test = load_test_data()
+    # # Normalize
+    X_test = normalize(X_test)
+    # get prediction
+    y_pred = model.predict(X_test)
+    # evaluate predictions
+    print_performance(y_test, y_pred, 'test')
+
+
+def print_performance(y_true, y_pred, name):
+    predictions = [round(value) for value in y_pred]
+    perfs = [accuracy_score, balanced_accuracy_score,
+             log_loss, f1_score, roc_auc_score]
+    for perf in perfs:
+        print(perf.__name__ + f' on {name} set:' + '%.2f%%' % (perf(y_true, predictions) * 100.0))
+
 
 if __name__ == "__main__":
-    train_lazy()
+    train_ann()
