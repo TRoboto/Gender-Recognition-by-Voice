@@ -2,6 +2,5 @@
 EPOCHS = 20
 TRAIN_BATCH_SIZE = 20
 VALID_BATCH_SIZE = 20
-WINDOW_SIZE = 128
-DATA_PATH = '../dataset/cv-valid-train_filtered.csv'
-MAX_LENGTH = 64
+DATA_PATH = '../dataset/cv-valid-train.csv'
+TEST_DATA_PATH = '../dataset/cv-valid-test.csv'
