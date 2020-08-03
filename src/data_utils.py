@@ -152,11 +152,11 @@ def get_dataloader(X, y, dtype='train'):
 
 
 def normalize(X):
-    if os.path.isfile('results/scaler.pkl'):
-        scaler = pickle.load(open('results/scaler.pkl', 'rb'))
+    if os.path.isfile(config.SCALAR_PATH):
+        scaler = pickle.load(open(config.SCALAR_PATH, 'rb'))
         return scaler.transform(X)
     
     scaler = StandardScaler()
     Xn = scaler.fit_transform(X)
-    pickle.dump(scaler, open('results/scaler.pkl'))
+    pickle.dump(scaler, open(config.SCALAR_PATH))
     return Xn
