@@ -12,7 +12,7 @@ torch.backends.cudnn.deterministic = True
 
 class ann_model(nn.Module):
     def __init__(self, input_shape=187):
-        super(simple_ann, self).__init__()
+        super(ann_model, self).__init__()
 
         self.fc1 = nn.Linear(input_shape, 256)
         self.fc2 = nn.Linear(256, 128)
@@ -20,6 +20,8 @@ class ann_model(nn.Module):
         self.out = nn.Linear(64, 1)
 
         self.dropout = nn.Dropout(0.3)
+        self.bn1 = nn.BatchNorm1d(256)
+        self.bn2 = nn.BatchNorm1d(128)
 
     def forward(self, x):
 
