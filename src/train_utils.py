@@ -26,7 +26,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, model_name,
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:
-                model.eval()   # Set model to evaluate mode
+                model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
             running_corrects = 0
@@ -104,6 +104,6 @@ def eval_fn(model, test_loader):
 
             outputs = model(inputs)
             running_corrects += torch.sum(labels.view_as(outputs)
-                                            == torch.round(outputs))
+                                          == torch.round(outputs))
 
     print('Test set ACC:', running_corrects / len(test_loader.dataset))
