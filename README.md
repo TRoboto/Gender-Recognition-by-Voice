@@ -73,6 +73,8 @@ Replace `file_location` with the location of an audio file on your pc like this:
 ```
 http://127.0.0.1:5000/predict?audio_file=C:\my_voice.m4a
 ```
+**NOTE:** You can use Voice Recorder app to record five seconds of your voice and then, save it and test it.
+
 3. If everything is working as expecting, you should see the output as follows:
 ```
 {
