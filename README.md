@@ -18,6 +18,7 @@ The code used for training can be found in the `src` folder.
 
 For more details about the project and the procedure I followed to develop this model, **refer to `report.pdf`, which can be found in the main repo.**
 
+**NOTE : ** If you want to train and test models, you can use the features I extracted from the dataset from [here](https://drive.google.com/drive/folders/1kVCoOcnIJgV4fChpoEG7iandE6bM8AHt?usp=sharing). Don't forget to put them in `src/results`
 
 **Support!**  
 If you find this project helpful, please support me by starring this repository.
