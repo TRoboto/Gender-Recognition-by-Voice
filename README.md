@@ -12,7 +12,7 @@
 ## Description
 The aim of this project is to develop a model that can take a waveform as its input and output speaker’s gender, whether male or female. The developed model is trained on the Common Voice dataset, which can be found [here](https://www.kaggle.com/mozillaorg/common-voice). It includes more than 70,000 records of male and female from different countries.  
 
-The project includes a flash app that eases the use of the final model. The final model, XGBoost, managed to achieve an accuracy of 97.1% on the test set, which is almost perfect. 
+The project includes a flask localhost API that eases the use of the final model. The final model, XGBoost, managed to achieve an accuracy of 97.1% on the test set, which is almost perfect. 
 
 The code used for training can be found in the `src` folder.  
 
